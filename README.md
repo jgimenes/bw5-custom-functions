@@ -1,1 +1,1 @@
-"# TIBCO BusinessWorks 5.X - Custom Functions" 
+TIBCO BusinessWorks 5.X - Custom Functions 
