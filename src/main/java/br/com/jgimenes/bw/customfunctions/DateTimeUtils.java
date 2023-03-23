@@ -3,15 +3,19 @@ package br.com.jgimenes.bw.customfunctions;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalField;
+import java.time.temporal.WeekFields;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
-public class DateTimeTools implements Serializable {
+public class DateTimeUtils implements Serializable {
 
 	/**
 	 * 
@@ -67,7 +71,22 @@ public class DateTimeTools implements Serializable {
 	 */
 
 	public static int extractDayOfYear(String date) {
-		return extractFromDateOfYear("day", date);
+
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+		Date day = null;
+		Calendar calendar = Calendar.getInstance(Locale.getDefault());
+		try {
+			day = formatter.parse(date);
+
+			calendar.setTime(day);
+
+		} catch (ParseException e) {
+
+			e.printStackTrace();
+		}
+
+		return calendar.get(Calendar.DAY_OF_YEAR);
+
 	}
 
 	/**
@@ -79,7 +98,14 @@ public class DateTimeTools implements Serializable {
 	 */
 
 	public static int extractWeekOfYear(String date) {
-		return extractFromDateOfYear("week", date);
+
+		WeekFields weekFields = WeekFields.of(Locale.getDefault());
+		weekFields.getFirstDayOfWeek();
+		weekFields.getMinimalDaysInFirstWeek();
+		TemporalField weekOfYear = weekFields.weekOfYear();
+		LocalDate day = LocalDate.parse(date);
+
+		return day.get(weekOfYear);
 	}
 
 	/**
@@ -91,41 +117,15 @@ public class DateTimeTools implements Serializable {
 	 * 
 	 */
 
-	private static int extractFromDateOfYear(String query, String date) {
-
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-		formatter.setTimeZone(TimeZone.getDefault());
-		Calendar calendar = Calendar.getInstance();
-		Date d = new Date();
-		try {
-			d = formatter.parse(date);
-			calendar.setTime(d);
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		int fromDateOfYear = 0;
-
-		if (query == "day") {
-			fromDateOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-		} else if (query == "week") {
-			fromDateOfYear = calendar.get(Calendar.WEEK_OF_YEAR);
-		}
-
-		return fromDateOfYear;
-
-	}
-
 	public static final String[][] HELP_STRINGS = {
-			{ "epochToHumanReadable", "Convert from Epoch to Human Readable Date.",
-					"epochToHumanReadable(\"1678995698996\")", "2023-03-16T16:40:23.023-03:00" },
-			{ "humanReadableToEpoch", "Convert from Human Readable Date to Epoch.",
+			{ "epochToHumanReadable", "Convert Epoch time to a readable date format.",
+				"epochToHumanReadable(\"1678995698996\")", "2023-03-16T16:40:23.023-03:00" },
+			{ "humanReadableToEpoch", "Convert a readable date format to an Epoch timestamp..",
 					"humanReadableToEpoch(\"2023-03-16T16:40:23.023-03:00\")", "1678995623000" },
 			{ "extractDayOfYear", "Retrieves the day number within a year for a given date.",
-					"extractWeekOfYear(\"2023-12-31\")", "365" },
+						"extractWeekOfYear(\"2023-12-31\")", "365" },
 			{ "extractWeekOfYear", "Retrieves the week number within a year for a given date.",
-					"extractWeekOfYear(\"2023-12-31\")", "53" },
+							"extractWeekOfYear(\"2023-12-31\")", "53" },
 
 	};
 }
