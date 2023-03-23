@@ -1,4 +1,4 @@
-# Custom Functions TIBCO BusinessWorks 6/CE
+# Custom Functions TIBCO BusinessWorks 5.X
 <p>
 <img src =https://img.shields.io/static/v1?label=licence&message=MIT&color=green />
 <img src =https://img.shields.io/static/v1?label=status&message=Under%20Contruction&color=yellow />
