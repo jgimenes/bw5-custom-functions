@@ -42,7 +42,7 @@ public class CalendarUtil implements Serializable {
 		try {
 			rootNode = mapper.readTree(jsonHoliday.toString());
 		} catch (IOException e) {
-			System.out.println(String.format("Error reading the JSON: ",  e.getMessage()));
+			System.out.println(String.format("Error reading the JSON:",  e.getMessage()));
 			return "";
 		}
 
@@ -52,12 +52,12 @@ public class CalendarUtil implements Serializable {
 
 		while (holidayNodes.hasNext()) {
 			JsonNode holidayNode = holidayNodes.next();
-			String strDate = holidayNode.path("data").asText();
+			String strDate = holidayNode.path(KEY_DATE).asText();
 			LocalDate holidayDate;
 			try {
 				holidayDate = LocalDate.parse(strDate, dateFormatter);
 			} catch (DateTimeParseException e) {
-				System.out.println(String.format("Invalid date in JSON :" + e.getMessage()));
+				System.out.println(String.format("Invalid date in JSON:", e.getMessage()));
 				continue;
 			}
 
@@ -73,13 +73,10 @@ public class CalendarUtil implements Serializable {
 		try {
 			json = mapper.writeValueAsString(holiday);
 		} catch (JsonProcessingException e) {
-			System.out.println(String.format("Error converting object to JSON",  e.getMessage()));
+			System.out.println(String.format("Error converting object to JSON:",  e.getMessage()));
 			return "";
 		}
 				
-		if (holiday.isEmpty()) {
-			return "";
-		}
 		
 		return json;
 	}
