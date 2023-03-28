@@ -1,19 +1,88 @@
 package br.com.jgimenes.bw.customfunctions;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class CalendarUtil implements Serializable {
 
 	private static final long serialVersionUID = -8167134812970450862L;
+	private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	private static final String KEY_DATE = "date";
+	private static final String KEY_DAY_OF_WEEK = "dayOfWeek";
+	private static final String KEY_DESCRIPTION = "description";
 
 	
+	/**
+	 * Returns a JSON string containing information about a holiday based on the provided date.
+	 * 
+	 * @param date
+	 * @return  a JSON string containing information about a holiday based on the provided date, or null if an error occurs
+	 * 
+	 */
+	
+	public static String getHoliday(String date) {
+		int year = LocalDate.parse(date, dateFormatter).getYear();
+		String jsonHoliday = getHolidays(year);
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode rootNode = null;
+
+		try {
+			rootNode = mapper.readTree(jsonHoliday.toString());
+		} catch (IOException e) {
+			System.out.println("Erro ao ler o JSON: " + e.getMessage());
+			return "";
+		}
+
+		Map<String, Object> holiday = new HashMap<>();
+
+		Iterator<JsonNode> holidayNodes = rootNode.path("holiday").elements();
+
+		while (holidayNodes.hasNext()) {
+			JsonNode holidayNode = holidayNodes.next();
+			String strDate = holidayNode.path("data").asText();
+			LocalDate holidayDate;
+			try {
+				holidayDate = LocalDate.parse(strDate, dateFormatter);
+			} catch (DateTimeParseException e) {
+				System.out.println("Data inválida no JSON: " + e.getMessage());
+				continue;
+			}
+
+			if (holidayDate.equals(LocalDate.parse(date, dateFormatter))) {
+				holiday.put(KEY_DATE, holidayNode.path(KEY_DATE).asText());
+				holiday.put(KEY_DAY_OF_WEEK, holidayNode.path(KEY_DAY_OF_WEEK).asText());
+				holiday.put(KEY_DESCRIPTION, holidayNode.path(KEY_DESCRIPTION).asText());
+				break;
+			}
+		}
+
+		String json = "";
+		try {
+			json = mapper.writeValueAsString(holiday);
+		} catch (JsonProcessingException e) {
+			System.out.println("Erro ao converter objeto para JSON: " + e.getMessage());
+			return "";
+		}
+				
+		if (holiday.isEmpty()) {
+			return "";
+		}
+		
+		return json;
+	}
+
 	/**
 	 * 
 	 * Provides a list of national holidays corresponding to the specified year.
@@ -22,37 +91,52 @@ public class CalendarUtil implements Serializable {
 	 * @return holidays
 	 * 
 	 */
-	public static List<Holiday> getHolidays(int year) {
 
-		List<Holiday> holidays = new ArrayList<>();
+	public static String getHolidays(int year) {
 
-		holidays.add(new Holiday(LocalDate.of(year, 1, 1).format(dateFormatter), null, "Ano Novo"));
-		holidays.add(
-				new Holiday(getEasterDay(year).minusDays(48).format(dateFormatter), null, "Segunda-Feira de Carnaval"));
-		holidays.add(new Holiday(getEasterDay(year).minusDays(47).format(dateFormatter), null, "Carnaval"));
-		holidays.add(
-				new Holiday(getEasterDay(year).minusDays(46).format(dateFormatter), null, "Quarta-Feira de Cinzas"));
-		holidays.add(new Holiday(getEasterDay(year).minusDays(2).format(dateFormatter), null, "Sexta-Feira da Paixão"));
-		holidays.add(new Holiday(getEasterDay(year).format(dateFormatter), null, "Domingo de Páscoa"));
-		holidays.add(new Holiday(LocalDate.of(year, 4, 21).format(dateFormatter), null, "Dia de Tiradentes"));
-		holidays.add(new Holiday(LocalDate.of(year, 5, 1).format(dateFormatter), null, "Dia do Trabalhador"));
-		holidays.add(new Holiday(getEasterDay(year).minusDays(60).format(dateFormatter), null, "Corpo de Cristo"));
-		holidays.add(new Holiday(LocalDate.of(year, 9, 7).format(dateFormatter), null, "Independência do Brasil"));
-		holidays.add(
-				new Holiday(LocalDate.of(year, 10, 12).format(dateFormatter), null, "Dia de Nossa Senhora Aparecida"));
-		holidays.add(new Holiday(LocalDate.of(year, 11, 2).format(dateFormatter), null, "Dia de Finados"));
-		holidays.add(new Holiday(LocalDate.of(year, 11, 15).format(dateFormatter), null, "Proclamação da República"));
-		holidays.add(new Holiday(LocalDate.of(year, 12, 25).format(dateFormatter), null, "Natal"));
+	    List<Map<String, Object>> holidays = new ArrayList<>();
 
-		for (Holiday holiday : holidays) {
-			LocalDate currentDate = LocalDate.parse(holiday.getDate(), dateFormatter);
-			String dayOfWeek = translateDayOfWeek(currentDate.getDayOfWeek().getValue());
-			holiday.setDayOfWeek(dayOfWeek);
-		}
+	    holidays.add(mapHoliday(LocalDate.of(year, 1, 1), "Ano Novo"));
+	    holidays.add(mapHoliday(getEasterDay(year).minusDays(48), "Segunda-Feira de Carnaval"));
+	    holidays.add(mapHoliday(getEasterDay(year).minusDays(47), "Carnaval"));
+	    holidays.add(mapHoliday(getEasterDay(year).minusDays(46), "Quarta-Feira de Cinzas"));
+	    holidays.add(mapHoliday(getEasterDay(year).minusDays(2), "Sexta-Feira da Paixão"));
+	    holidays.add(mapHoliday(getEasterDay(year), "Páscoa"));
+	    holidays.add(mapHoliday(LocalDate.of(year, 4, 21), "Dia de Tiradentes"));
+	    holidays.add(mapHoliday(LocalDate.of(year, 5, 1), "Dia do Trabalhador"));
+	    holidays.add(mapHoliday(getEasterDay(year).plusDays(60), "Corpo de Cristo"));
+	    holidays.add(mapHoliday(LocalDate.of(year, 9, 7), "Independência do Brasil"));
+	    holidays.add(mapHoliday(LocalDate.of(year, 10, 12), "Dia de Nossa Senhora Aparecida"));
+	    holidays.add(mapHoliday(LocalDate.of(year, 11, 2), "Dia de Finados"));
+	    holidays.add(mapHoliday(LocalDate.of(year, 11, 15), "Proclamação da República"));
+	    holidays.add(mapHoliday(LocalDate.of(year, 12, 25), "Natal"));
 
-		return holidays;
+	    ObjectMapper mapper = new ObjectMapper();
+	    Map<String, Object> jsonObjectRoot = Collections.singletonMap("holiday", holidays);
+
+	    try {
+	        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObjectRoot);
+	    } catch (JsonProcessingException e) {
+	        throw new RuntimeException(e);
+	    }
 	}
+	
+	/**
+	 * 
+	 * @param data
+	 * @param descricao
+	 * @return
+	 */
 
+	private static Map<String, Object> mapHoliday(LocalDate date, String descricao) {
+		Map<String, Object> holiday = new HashMap<>();
+		holiday.put(KEY_DATE, date.format(dateFormatter));
+		holiday.put(KEY_DAY_OF_WEEK, translateDayOfWeek(date.getDayOfWeek().getValue()));
+		holiday.put(KEY_DESCRIPTION, descricao);
+		return holiday;
+	}
+	
+		
 	/**
 	 * 
 	 * Performs the translation of the days of the week from English to Portuguese.
@@ -95,12 +179,6 @@ public class CalendarUtil implements Serializable {
 		int day = ((h + l - 7 * m + 114) % 31) + 1;
 		return LocalDate.of(year, month, day);
 	}
-
-	/**
-	 * Date formatting for the Brazilian calendar.
-	 */
-
-	private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
 	/*
 	 * Translation of the days of the week from English to Portuguese.
