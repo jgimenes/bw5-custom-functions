@@ -24,6 +24,7 @@ public class CalendarUtil implements Serializable {
 	private static final String KEY_DESCRIPTION = "description";
 
 	
+	
 	/**
 	 * Returns a JSON string containing information about a holiday based on the provided date.
 	 * 
@@ -41,7 +42,7 @@ public class CalendarUtil implements Serializable {
 		try {
 			rootNode = mapper.readTree(jsonHoliday.toString());
 		} catch (IOException e) {
-			System.out.println("Erro ao ler o JSON: " + e.getMessage());
+			System.out.println(String.format("Error reading the JSON: ",  e.getMessage()));
 			return "";
 		}
 
@@ -56,7 +57,7 @@ public class CalendarUtil implements Serializable {
 			try {
 				holidayDate = LocalDate.parse(strDate, dateFormatter);
 			} catch (DateTimeParseException e) {
-				System.out.println("Data inválida no JSON: " + e.getMessage());
+				System.out.println(String.format("Invalid date in JSON :" + e.getMessage()));
 				continue;
 			}
 
@@ -72,7 +73,7 @@ public class CalendarUtil implements Serializable {
 		try {
 			json = mapper.writeValueAsString(holiday);
 		} catch (JsonProcessingException e) {
-			System.out.println("Erro ao converter objeto para JSON: " + e.getMessage());
+			System.out.println(String.format("Error converting object to JSON",  e.getMessage()));
 			return "";
 		}
 				
