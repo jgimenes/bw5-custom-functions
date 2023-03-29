@@ -20,6 +20,7 @@ Overall, TIBCO BusinessWorks custom functions provide a flexible and powerful wa
 ### Topics
 
 - [Functions](#functions)
+  - [Custom Calendar Functions for Brazil](#custom-calendar-functions-for-brazil)
   - [Custom Date Time Functions](#custom-date-time-functions)
   - [Custom String Functions](#custom-string-functions)
 - [Install](#install)
@@ -32,6 +33,50 @@ This section provides an overview of the available custom functions and explains
 We will present the purpose and functionality of each custom function, and provide examples of how they can be used in a BusinessWorks process.
 
 By the end of this section, you should have a clear understanding of the available custom functions and how to use them effectively to meet your integration needs.
+
+- ### Custom Calendar Functions for Brazil
+  Custom calendar function for validating workdays and Brazilian national holidays, based on the Febraban calendar available at https://feriadosbancarios.febraban.org.br/.  
+
+  - #### getHoliday() 
+    **Description:** Returns a JSON string containing information about a holiday based on the provided date.  
+    **Template:** getHoliday(<< date >>)  
+    **Return Type:** JSON String 
+
+      ##### Example:
+
+        Input: ns:getHoliday("25/12/2024")
+        Return: {"date":"25/12/2024","dayOfWeek":"quarta-feira","description":"Natal"}
+
+  - #### getHolidays() 
+    **Description:** Returns a JSON string containing information about a holiday based on the provided date.  
+    **Template:** getHoliday(<< year >>)  
+    **Return Type:** JSON String 
+
+      ##### Example:
+
+        Input: ns:getHolidays("2023")
+        Return: {"holiday":[{"date":"01/01/2023","dayOfWeek":"domingo","description":"Ano Novo"},{"date":"20/02/2023","dayOfWeek":"segunda-feira","description":"Segunda-Feira de Carnaval"}, ... {"date":"25/12/2023","dayOfWeek":"segunda-feira","description":"Natal"}]}
+
+  - #### getWorkday() 
+    **Description:** This function takes a date as input and returns the next working day. If the input date is already a working day, the function returns that date.   
+    **Template:** getWorkday(<< date >>)  
+    **Return Type:** JSON String 
+
+      ##### Example:
+
+        Input: ns:getHoliday("25/12/2022")
+        Return: {"date":"25/12/2022","dayOfWeek":"domingo","description":"Natal","workday":"26/12/2022","workdayOfWeek":"segunda-feira"}
+
+      ##### Example:
+
+        Input: ns:getWorkday("25/03/2023")
+        Return: {"date":"25/03/2023","dayOfWeek":"sábado","workday":"27/03/2023","workdayOfWeek":"segunda-feira"}
+
+      ##### Example:
+
+        Input: ns:getWorkday("02/01/2025")
+        Return: {"date":"02/01/2025","dayOfWeek":"quinta-feira"}
+
 
 - ### Custom Date Time Functions
   Custom-built functions for manipulating dates and times.
