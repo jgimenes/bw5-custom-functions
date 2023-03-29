@@ -166,6 +166,17 @@ By the end of this section, you should have a clear understanding of the availab
 
           Input: ns:stringJoin("value1 value2 value3", " | ")
           Return: value1 | value2 | value3
+ 
+    - #### uuid() 
+      **Description:** Generate universally unique identifier (UUID) v.4.   
+      **Template:** uuid()    
+      **Return Type:** string  
+    
+      ##### Example:
+
+          Input: ns:uuid()
+          Return: f1895673-2727-4646-9cb2-bfaf1ba9cedf
+
 
 ## Install
 
