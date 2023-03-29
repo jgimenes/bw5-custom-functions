@@ -15,24 +15,169 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.LinkedHashMap;
 
 public class CalendarUtil implements Serializable {
 
 	private static final long serialVersionUID = -8167134812970450862L;
+
+	/**
+	 * 
+	 * Custom calendar function for validating workdays and Brazilian national
+	 * holidays, based on the Febraban calendar available at
+	 * https://feriadosbancarios.febraban.org.br/.
+	 * 
+	 * @author jgimenes
+	 * @version 1.0
+	 * 
+	 * 
+	 */
+
 	private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	private static final String KEY_DATE = "date";
 	private static final String KEY_DAY_OF_WEEK = "dayOfWeek";
 	private static final String KEY_DESCRIPTION = "description";
+	private static final String KEY_NEXT_WORKDAY = "workday";
+	private static final String KEY_NEXT_WORKDAY_OF_WEEK = "workdayOfWeek";
+
+	/**
+	 * 
+	 * This function determines the next working day based on the provided date.
+	 * 
+	 * @param date
+	 * @return date, day of week, holiday description if present, next workday and
+	 *         next workday of week
+	 * 
+	 */
+
+	public static String getWorkday(String date) {
+		String getHoliday = getHoliday(date);
+		String getWorkday = getWorkdaysOfMonth(LocalDate.parse(date, dateFormatter).getMonthValue(),
+				LocalDate.parse(date, dateFormatter).getYear());
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode holidayNode = null;
+		JsonNode workdayNode = null;
+		String nextWorkday = "";
+		boolean foundDate = false;
+
+		try {
+			holidayNode = mapper.readTree(getHoliday);
+		} catch (JsonProcessingException e) {
+			System.out.println(String.format("Error reading the JSON:", e.getMessage()));
+		}
+
+		try {
+			workdayNode = mapper.readTree(getWorkday);
+		} catch (JsonProcessingException e) {
+			System.out.println(String.format("Error reading the JSON:", e.getMessage()));
+		}
+
+		LocalDate searchDate = LocalDate.parse(date, dateFormatter);
+
+		while (!foundDate) {
+
+			for (JsonNode workdays : workdayNode.get("workday")) {
+				LocalDate workdayDate = LocalDate.parse(workdays.get("date").asText(), dateFormatter);
+
+				if (workdayDate.equals(searchDate)) {
+					nextWorkday = workdays.get("date").asText();
+					foundDate = true;
+					break;
+				}
+			}
+			if (!foundDate) {
+				searchDate = searchDate.plusDays(1);
+
+			}
+		}
+
+		Map<String, String> workday = new LinkedHashMap<>();
+
+		workday.put(KEY_DATE, date);
+		workday.put(KEY_DAY_OF_WEEK,
+				translateDayOfWeek(LocalDate.parse(date, dateFormatter).getDayOfWeek().getValue()));
+		if (!getHoliday.isEmpty()) {
+			workday.put(KEY_DESCRIPTION, holidayNode.path(KEY_DESCRIPTION).asText());
+		}
+		if (!date.equals(nextWorkday)) {
+			workday.put(KEY_NEXT_WORKDAY, nextWorkday);
+			workday.put(KEY_NEXT_WORKDAY_OF_WEEK,
+					translateDayOfWeek(LocalDate.parse(nextWorkday, dateFormatter).getDayOfWeek().getValue()));
+		}
+
+		String json = "";
+		try {
+			json = mapper.writeValueAsString(workday);
+		} catch (JsonProcessingException e) {
+			System.out.println(String.format("Error converting object to JSON:", e.getMessage()));
+			return "";
+		}
+
+		return json;
+
+	}
+
+	/**
+	 * 
+	 * Retrieve a list of working days for the given month and year.
+	 * 
+	 * @param month
+	 * @param year
+	 * @return workdays list of month
+	 * 
+	 */
+
+	public static String getWorkdaysOfMonth(int month, int year) {
+
+		int currentMonth = month;
+		int currentYear = year;
+		LocalDate date = LocalDate.of(year, month, 1);
+		List<Map<String, String>> workdays = new ArrayList<>();
+		String json = "";
+
+		while (currentMonth == month && currentYear == year) {
+
+			String strCurrentDate = date.format(dateFormatter);
+			Boolean isHoliday = getHoliday(strCurrentDate).isEmpty() ? false : true;
+			Boolean isWeekand = (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY)
+					? true
+					: false;
+
+			if (!isHoliday && !isWeekand) {
+				Map<String, String> workday = new HashMap<>();
+				workday.put(KEY_DATE, strCurrentDate);
+				workday.put(KEY_DAY_OF_WEEK, translateDayOfWeek(date.getDayOfWeek().getValue()));
+				workdays.add(workday);
+			}
+
+			date = date.plusDays(1);
+			currentYear = date.getYear();
+			currentMonth = date.getMonthValue();
+
+		}
+
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> jsonObjectRoot = Collections.singletonMap("workday", workdays);
+
+		try {
+			json = mapper.writeValueAsString(jsonObjectRoot);
+		} catch (JsonProcessingException e) {
+			System.out.println(String.format("Error converting object to JSON:", e.getMessage()));
+		}
+
+		return json;
+	}
 
 	/**
 	 * 
 	 * Retrieve a list of working days for the given year.
 	 * 
 	 * @param year
-	 * @return work days list
+	 * @return workdays list of year
+	 * 
 	 */
 
-	public static String getWorkdays(int year) {
+	public static String getWorkdaysOfYear(int year) {
 
 		int currentYear = year;
 		LocalDate date = LocalDate.of(year, 1, 1);
@@ -63,7 +208,7 @@ public class CalendarUtil implements Serializable {
 		Map<String, Object> jsonObjectRoot = Collections.singletonMap("workday", workdays);
 
 		try {
-			json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObjectRoot);
+			json = mapper.writeValueAsString(jsonObjectRoot);
 		} catch (JsonProcessingException e) {
 			System.out.println(String.format("Error converting object to JSON:", e.getMessage()));
 		}
@@ -71,14 +216,13 @@ public class CalendarUtil implements Serializable {
 		return json;
 	}
 
-		
 	/**
 	 * Returns a JSON string containing information about a holiday based on the
 	 * provided date.
 	 * 
 	 * @param date
 	 * @return a JSON string containing information about a holiday based on the
-	 *         provided date, or null if an error occurs
+	 *         provided date.
 	 * 
 	 */
 
@@ -95,7 +239,7 @@ public class CalendarUtil implements Serializable {
 			return "";
 		}
 
-		Map<String, Object> holiday = new HashMap<>();
+		Map<String, String> holiday = new HashMap<>();
 
 		Iterator<JsonNode> holidayNodes = rootNode.path("holiday").elements();
 
@@ -165,7 +309,7 @@ public class CalendarUtil implements Serializable {
 		Map<String, Object> jsonObjectRoot = Collections.singletonMap("holiday", holidays);
 
 		try {
-			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObjectRoot);
+			return mapper.writeValueAsString(jsonObjectRoot);
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException(e.getMessage());
 		}
@@ -245,5 +389,22 @@ public class CalendarUtil implements Serializable {
 		daysOfWeek.put(6, "sábado");
 		daysOfWeek.put(7, "domingo");
 	}
+
+	public static final String[][] HELP_STRINGS = { { "getWorkday",
+			"This function determines the next working day based on the provided date.", "getWorkday(\"01/01/2023\")",
+			"{\"date\":\"01/01/2023\",\"dayOfWeek\":\"domingo\",\"description\":\"Ano Novo\",\"workday\":\"02/01/2023\",\"workdayOfWeek\":\"segunda-feira\"}" },
+			{ "getWorkdaysOfMonth", "Retrieve a list of working days for the given month and year.",
+					"getWorkdaysOfMonth(01, 2023)",
+					"{\"workday\": [{\"date\": \"02/01/2023\", \"dayOfWeek\": \"segunda-feira\"}, ... {\"date\": \"31/01/2023\", \"dayOfWeek\": \"terça-feira\"} ]}" },
+			{ "getWorkdaysOfYear", "Retrieve a list of working days for the given year.", "getWorkdaysOfYear(2023)",
+					"{\"workday\": [{\"date\": \"02/01/2023\", \"dayOfWeek\": \"segunda-feira\"}, ... {\"date\": \"29/12/2023\", \"dayOfWeek\": \"sexta-feira\"}]}" },
+			{ "getHoliday", "Returns a JSON string containing information about a holiday based on the provided date.",
+					"getHoliday(\"01/01/2023\")",
+					"{\"date\": \"01/01/2023\", \"dayOfWeek\": \"segunda-feira\", \"description\": \"Ano Novo\"}" },
+			{ "getHolidays", "Returns a JSON string containing information about a holiday based on the provided date.",
+					"getHolidays(2023)",
+					"{\"holiday\": [{\"date\": \"01/01/2023\", \"dayOfWeek\": \"domingo\", \"description\": \"Ano Novo\"}, ... {\"date\": \"25/12/2023\", \"dayOfWeek\": \"segunda-feira\", \"description\": \"Natal\"}]}" },
+
+	};
 
 }
