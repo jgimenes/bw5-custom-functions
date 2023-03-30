@@ -123,7 +123,7 @@ public class StringUtils implements Serializable {
 	/**
 	 * 
 	 * Returns a string constructed by concatenating all the strings in a sequence
-	 * (each values separated by comma), using the second argument as a separator.
+	 * (each values separated by space), using the second argument as a separator.
 	 * 
 	 * @param values
 	 * @param separator
@@ -136,7 +136,7 @@ public class StringUtils implements Serializable {
 	}
 
 	/**
-	 * Generate universally unique identifier (UUID) v.4..
+	 * Generate universally unique identifier (UUID) v.4.
 	 * 
 	 * @return uuid
 	 * 
