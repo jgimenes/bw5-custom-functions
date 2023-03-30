@@ -23,6 +23,7 @@ Overall, TIBCO BusinessWorks custom functions provide a flexible and powerful wa
   - [Custom Calendar Functions for Brazil](#custom-calendar-functions-for-brazil)
   - [Custom Date Time Functions](#custom-date-time-functions)
   - [Custom String Functions](#custom-string-functions)
+  - [Custom Obfuscate Functions](#custom-obfuscate-functions)
 - [Install](#install)
 - [Uninstall](#uninstall)
 - [MIT Licence](#mit-licence)
@@ -222,6 +223,28 @@ By the end of this section, you should have a clear understanding of the availab
           Input: ns:uuid()
           Return: f1895673-2727-4646-9cb2-bfaf1ba9cedf
 
+- ### Custom Obfuscate Functions
+  Use the TIBCO TIBCrypt library to obfuscate or deobfuscate a string or obfuscated string.
+  
+  - #### deObfuscate()
+    **Description:** Decrypt TIBCrypt-obfuscated password and return plain text.  
+    **Template:** deObfuscate(<< obfuscate-string >>)  
+    **Return Type:** string  
+    
+    #### Example:
+    
+        Input: deObfuscate("#!LHdMPBLQvn2RcQatS3PefpPCe14qaeO+")
+        Return: P4ssw0rd
+
+  - #### obfuscate()
+    **Description:** Encrypt plain text and return TIBCrypt-obfuscated string.  
+    **Template:** obfuscate(<< string >>)  
+    **Return Type:** string  
+    
+    #### Example:
+    
+        Input: deObfuscate("P4ssw0rd")
+        Return: #!LHdMPBLQvn2RcQatS3PefpPCe14qaeO+
 
 ## Install
 
