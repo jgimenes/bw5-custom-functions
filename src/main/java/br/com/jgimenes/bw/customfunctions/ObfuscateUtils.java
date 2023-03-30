@@ -6,7 +6,7 @@ import com.tibco.security.ObfuscationEngine;
 public class ObfuscateUtils implements Serializable {
 
 	/**
-	 * TIBCO Business Works 5.X - Obfuscate Tools Custom Functions.
+	 * TIBCO Business Works 5.X - Custom Obfuscate Functions.
 	 * 
 	 * @author jgimenes
 	 * @version 1.0
